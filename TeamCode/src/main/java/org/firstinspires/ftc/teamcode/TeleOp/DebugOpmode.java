@@ -16,7 +16,7 @@ public class DebugOpmode extends OpMode
 	private final DcMotor[] driveMotors = new DcMotor[4];
 	private DcMotor linearSlide;
 	private Servo cupServo;
-	private double leftPower, rightPower;
+	private int slideLocation;
 
 	@Override
 	public void init() {
@@ -40,10 +40,10 @@ public class DebugOpmode extends OpMode
 		}
 
 		linearSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
+		linearSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 		telemetry.addData("Status", "Initialized");
-		telemetry.addData("Version", "v1.11 Debug");
+		telemetry.addData("Version", "v1.12 Debug");
 		telemetry.addData("Cup Servo Debug", cupServo.getConnectionInfo());
 	}
 
@@ -68,16 +68,24 @@ public class DebugOpmode extends OpMode
 		driveMotors[2].setPower(Range.clip(drivefb + turn - drivelr, -1.0, 1.0));  //bl
 		driveMotors[3].setPower(Range.clip(drivefb - turn + drivelr, -1.0, 1.0));  //br
 
-		if (gamepad2.a && cupServo.getPosition()>= 0.5) cupServo.setPosition(0.4);  //
+		if (gamepad2.a && cupServo.getPosition()>= 0.5) cupServo.setPosition(0.40);  //
 		else if (gamepad2.b && cupServo.getPosition() < 0.5) cupServo.setPosition(0.92); //
 
-		if (gamepad2.left_trigger > 0.05) {
+		if (gamepad2.left_trigger > 0.01) {
 			linearSlide.setPower(1*gamepad2.left_trigger);
+			slideLocation = linearSlide.getCurrentPosition();
 		}
-		else if (gamepad2.right_trigger > 0.05) linearSlide.setPower(-1*gamepad2.right_trigger);
+		else if (gamepad2.right_trigger > 0.01) {
+			linearSlide.setPower(-1*gamepad2.right_trigger);
+			slideLocation = linearSlide.getCurrentPosition();
+		}
+		else {
+			linearSlide.setPower(0.0);
+			linearSlide.setTargetPosition(slideLocation);
+		}
+
 
 		telemetry.addData("Status", "Run Time: " + runtime);
-		telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
 		telemetry.addData("Servos", "Cup (%.2f)", cupServo.getPosition());
 	}
 
